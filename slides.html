@@ -218,6 +218,79 @@ Clear a metric before monitoring it:
     $ traffic_ctl metric zero proxy.node.http.cache_read_errors
 ```
 
+---
+class: center, middle
+# Plugin integration
+
+Plugins can and should integrate into the metrics and configuration subsystems.
+
+---
+# Plugin metrics
+
+* Check for metric existence, creating if neccessary.
+* Create metrics at plugin initialization.
+
+```C
+/* Attach to an existing metric. */
+tsapi TSReturnCode TSStatFindName(
+    const char *name, int *idp);
+
+/* Create a new metric. */
+tsapi int TSStatCreate(
+    const char *name, TSRecordDataType datatype,
+    TSStatPersistence persist, TSStatSync sync);
+```
+
+---
+# Plugin configuration records.
+
+* Add configuration values to `records.config`.
+* Register configurations in plugin initialization.
+* Query configuration values on demand.
+
+```C
+/* Register the existence of a configuration. */
+tsapi TSReturnCode TSMgmtStringCreate(
+    TSRecordType rec_type,
+    const char *name,
+    const TSMgmtString default_value,
+    TSRecordUpdateType update_type,
+    TSRecordCheckType check_type,
+    const char *check_regex,
+    TSRecordAccessType access_type);
+
+/* Fetch a configuration value. */
+tsapi TSReturnCode TSMgmtStringGet(const char *var_name, TSMgmtString *result);
+
+/* Receive reload configuration events. */
+tsapi void TSMgmtUpdateRegister(TSCont contp, const char *plugin_name);
+```
+
+---
+# Plugin messages
+
+* Broadcast arbitrary key/value pairs to plugins
+```
+    $ traffic_ctl plugin msg KEY VALUE
+```
+
+```C
+
+int handler(TSCont this, TSEvent id, void *data)
+{
+  if (event == TS_EVENT_LIFECYCLE_MSG: {
+    TSPluginMsg *msg = (TSPluginMsg *)data;
+    ...
+  }
+
+  return TS_EVENT_NONE;
+}
+
+void TSPluginInit(...) {
+  TSLifecycleHookAdd(TS_LIFECYCLE_MSG_HOOK, contp);
+}
+
+```
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js">
     </script>
