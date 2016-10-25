@@ -203,6 +203,21 @@ $ sudo traffic_ctl config match restrict
 proxy.config.admin.api.restricted: 1
 ```
 
+---
+# Metrics
+
+Use `traffic_ctl` for discovery and quick'n'dirty monitoring:
+
+```
+    $ watch -d -n 1 traffic_ctl metric match http.*.xx_responses
+```
+
+--
+Clear a metric before monitoring it:
+```
+    $ traffic_ctl metric zero proxy.node.http.cache_read_errors
+```
+
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js">
     </script>
