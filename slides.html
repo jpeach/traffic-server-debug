@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Title</title>
+    <meta charset="utf-8">
+    <style>
+      @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
+      @import url(https://fonts.googleapis.com/css?family=Droid+Serif:400,700,400italic);
+      @import url(https://fonts.googleapis.com/css?family=Ubuntu+Mono:400,700,400italic);
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+
+class: center, middle
+
+# Traffic Server Operations and Debugging
+
+.center[James Peach]
+.center[jpeach@apache.org]
+
+---
+# Agenda
+
+1. Introduction
+2. Configuration
+3. Metrics
+4. HTTP Debugging with X-Debug
+5. Slow logging
+
+---
+# Previous presentations
+
+* *2015* -- Eric Schwartz [Diagnostics & Debugging](https://cwiki.apache.org/confluence/display/TS/Presentations+-+2015?preview=/56066455/61329270/ATS%20Summit-%20Diagnostics%20%26%20Debugging-2.pdf)
+* *2014* -- Bryan Call & Brian Geffon [Debugging ATS](https://docs.google.com/presentation/d/1Qokjj5VuB3HvIPEi00ZTp_mJrhrIxraZPgIs4CMyoxM/edit#slide=id.p)
+
+---
+# traffic_layout
+
+Show the installation layout and features
+
+--
+```
+    $ traffic_layout --help
+    Usage: traffic_layout [--SWITCH [ARG]]
+    switch__________________type__default___description
+    -l, --layout            tog   false     Show the layout (this is the default with no options given)
+    -f, --features          tog   false     Show the compiled features
+    -j, --json              tog   false     Produce output in JSON format (when supported)
+    -h, --help                              Print usage information
+    -V, --version                           Print version string
+```
+
+---
+# traffic_layout
+
+```
+    $ traffic_layout
+    PREFIX: /opt/ats
+    BINDIR: /opt/ats/bin
+    SYSCONFDIR: /opt/ats/etc/trafficserver
+    LIBDIR: /opt/ats/lib
+    LOGDIR: /opt/ats/var/log/trafficserver
+    RUNTIMEDIR: /opt/ats/var/trafficserver
+    PLUGINDIR: /opt/ats/libexec/trafficserver
+    INCLUDEDIR: /opt/ats/include
+    SNAPSHOTDIR: /opt/ats/etc/trafficserver/snapshots
+    records.config: /opt/ats/etc/trafficserver/records.config
+    remap.config: /opt/ats/etc/trafficserver/remap.config
+    plugin.config: /opt/ats/etc/trafficserver/plugin.config
+    ssl_multicert.config: /opt/ats/etc/trafficserver/ssl_multicert.config
+    storage.config: /opt/ats/etc/trafficserver/storage.config
+    hosting.config: /opt/ats/etc/trafficserver/hosting.config
+    volume.config: /opt/ats/etc/trafficserver/volume.config
+    ip_allow.config: /opt/ats/etc/trafficserver/ip_allow.config
+```
+
+--
+JSON output for tool consumption
+
+---
+# traffic_ctl
+
+Swiss army knife for `traffic_server` interaction.
+
+```
+    $ traffic_ctl
+    Usage: traffic_ctl [OPTIONS] CMD [ARGS ...]
+
+    Subcommands:
+        alarm           Manipulate alarms
+        cluster         Stop, restart and examine the cluster
+        config          Manipulate configuration records
+        metric          Manipulate performance metrics
+        server          Stop, restart and examine the server
+        storage         Manipulate cache storage
+        plugin          Interact with plugins
+
+    Options:
+      switch__________________type__default___description
+          --debug             on    false     Enable debugging output
+      -h, --help                              Print usage information
+      -V, --version                           Print version string
+```
+
+---
+# Configuration records
+
+```
+    $ traffic_ctl config match timeout_in
+    proxy.config.http.keep_alive_no_activity_timeout_in: 115
+    proxy.config.http.transaction_no_activity_timeout_in: 30
+    proxy.config.http.transaction_active_timeout_in: 900
+    proxy.config.ssl.handshake_timeout_in: 0
+    proxy.config.http2.no_activity_timeout_in: 120
+    proxy.config.http2.active_timeout_in: 900
+```
+
+--
+
+```
+    $ traffic_ctl config describe proxy.config.http.keep_alive_no_activity_timeout_in
+    Name            : proxy.config.http.keep_alive_no_activity_timeout_in
+    Current Value   : 115
+    Default Value   : 120
+    Record Type     : standard config
+    Data Type       : INT
+    Access Control  : default
+    Update Type     : dynamic, no restart
+    Update Status   : 0x0
+    Source          : administratively set
+    Syntax Check    : string matching a regular expression, '^[0-9]+$'
+    Version         : 0
+    Order           : 277
+    Raw Stat Block  : 0
+```
+
+---
+# Which configurations changed?
+
+--
+
+```bash
+    $ traffic_ctl config diff
+    proxy.config.ssl.number.threads has changed
+            Current Value   : -1
+            Default Value   : 0
+    proxy.config.http.server_ports has changed
+            Current Value   : 8080
+            Default Value   : 8080 8080:ipv6
+    proxy.config.http.keep_alive_no_activity_timeout_in has changed
+            Current Value   : 115
+            Default Value   : 120
+    proxy.config.url_remap.remap_required has changed
+            Current Value   : 0
+            Default Value   : 1
+    proxy.config.diags.debug.tags has changed
+            Current Value   : ssl
+            Default Value   : http.*|dns.*
+    config.plugin.passthru.server_ports has changed
+            Current Value   : 9090
+            Default Value   : ""
+    proxy.config.proxy_binary_opts has changed
+            Current Value   : -M -f
+            Default Value   : -M
+```
+
+---
+# traffic_ctl security policy
+
+By default, read-only operations are open to all, but modifications require
+root.
+
+--
+```
+$ traffic_ctl config match restrict
+proxy.config.admin.api.restricted: 0
+```
+
+--
+```
+$ sudo traffic_ctl config set proxy.config.admin.api.restricted 1
+set proxy.config.admin.api.restricted, restart required
+```
+
+--
+```
+$ sudo killall -TERM traffic_manager
+```
+
+--
+```
+$ traffic_ctl config match restrict
+traffic_ctl: failed to fetch restrict: [5] Error establishing socket connection.
+$ sudo traffic_ctl config match restrict
+proxy.config.admin.api.restricted: 1
+```
+
+    </textarea>
+    <script src="https://remarkjs.com/downloads/remark-latest.min.js">
+    </script>
+    <script>
+var slideshow = remark.create({
+    highlightLines: true,
+    highlightSpans: true
+});
+    </script>
+  </body>
+</html>

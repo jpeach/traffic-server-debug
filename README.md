@@ -1,2 +1,3 @@
-# traffic-server-debug
-Traffic Server operations &amp; debugging presentation.
+# Traffic Server debugging and operations.
+
+[Traffic Server](https://trafficserver.apache.org) operations &amp; debugging [slides](slides.html).
