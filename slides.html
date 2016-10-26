@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Title</title>
+    <title>Traffic Server Observability</title>
     <meta charset="utf-8">
     <style>
       @import url(https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz);
@@ -216,6 +216,26 @@ Use `traffic_ctl` for discovery and quick'n'dirty monitoring:
 Clear a metric before monitoring it:
 ```
     $ traffic_ctl metric zero proxy.node.http.cache_read_errors
+```
+
+---
+# Stats over HTTP
+
+Use the `stats_over_http` plugin to emit metrics as JSON.
+
+```
+    $ curl http://127.0.0.1:8080/_stats
+    { "global": {
+        "proxy.node.hostname_FQ": "smelt.local",
+        "proxy.node.hostname": "smelt",
+        "proxy.node.restarts.manager.start_time": "1477522513",
+        "proxy.node.restarts.proxy.start_time": "1477522514",
+        "proxy.node.restarts.proxy.cache_ready_time": "1477522516",
+        "proxy.node.restarts.proxy.stop_time": "0",
+        "proxy.node.restarts.proxy.restart_count": "1",
+        ...
+      }
+    }
 ```
 
 ---
