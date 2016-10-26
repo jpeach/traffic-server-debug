@@ -291,6 +291,87 @@ void TSPluginInit(...) {
 }
 
 ```
+
+---
+# Request debugging with the xdebug plugin
+
+Send `X-Debug` header to ask which headers you want in the response.
+
+Useful headers to request:
+* Via
+* X-Cache
+* X-Cache-Key
+* X-Milestones
+
+---
+# X-Milestones
+
+Time to transtion [HTTP state
+machine](https://docs.trafficserver.apache.org/en/latest/developer-guide/plugins/hooks-and-transactions/index.en.html#http-transaction-state-diagram)
+states.
+
+```
+    $ curl -o /dev/null -s -D - -x 127.0.0.1:8080 \
+        -H 'X-Debug: X-Milestones' \
+        http://generator.jpeach.org/nocache/10000
+    HTTP/1.1 200 OK
+    Content-Length: 10000
+    Cache-Control: private
+    Date: Wed, 26 Oct 2016 18:13:54 GMT
+    Age: 0
+    Proxy-Connection: keep-alive
+    Server: ATS/7.1.0
+    X-Milestones:
+      PLUGIN-TOTAL=0.000037000,
+      PLUGIN-ACTIVE=0.000037000,
+      CACHE-OPEN-WRITE-END=0.011631000,
+      CACHE-OPEN-WRITE-BEGIN=0.000259000,
+      CACHE-OPEN-READ-END=0.000148000,
+      CACHE-OPEN-READ-BEGIN=0.000148000,
+      SERVER-READ-HEADER-DONE=0.011806000,
+      SERVER-FIRST-READ=0.011806000,
+      SERVER-BEGIN-WRITE=0.011631000,
+      SERVER-CONNECT-END=0.011631000,
+      UA-BEGIN-WRITE=0.011806000,
+      UA-READ-HEADER-DONE=0.000000000,
+      UA-FIRST-READ=0.000000000,
+      UA-BEGIN=0.000000000
+```
+
+---
+# Via
+
+```
+$ curl -o /dev/null -s -D - -x 127.0.0.1:8080 \
+    -H 'X-Debug: Via' \
+    http://generator.jpeach.org/nocache/10000
+HTTP/1.1 200 OK
+Content-Length: 10000
+Cache-Control: private
+Date: Wed, 26 Oct 2016 18:22:57 GMT
+Age: 0
+Proxy-Connection: keep-alive
+Via: http/1.1 tcp ipv4 smelt.local (ApacheTrafficServer/7.1.0 [uScMsSf pSeN:t cCMi p sS])
+Server: ATS/7.1.0
+```
+
+```
+$ traffic_via '[uScMsSf pSeN:t cCMi p sS]'
+Via Header Details:
+Request headers received from client              :simple request (not conditional)
+Result of Traffic Server cache lookup for URL     :miss (a cache "MISS")
+Response information received from origin server  :connection opened successfully
+Result of document write-to-cache:                :no cache write performed
+Proxy operation result                            :served or connection opened successfully
+Error codes (if any)                              :no error
+Tunnel info                                       :no tunneling
+Cache Type                                        :cache
+Cache Lookup Result                               :cache miss (url not in cache)
+ICP status                                        :no icp
+Parent proxy connection status                    :no parent proxy or unknown
+Origin server connection status                   :connection opened successfully
+```
+
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js">
     </script>
