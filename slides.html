@@ -392,6 +392,24 @@ Parent proxy connection status                    :no parent proxy or unknown
 Origin server connection status                   :connection opened successfully
 ```
 
+---
+# Slow request logging
+
+Set [proxy.config.http.slow.log.threshold](https://docs.trafficserver.apache.org/en/latest/admin-guide/files/records.config.en.html#proxy-config-http-slow-log-threshold) to log milestones for requests that
+take longer than a threshold (in msec).
+
+Use
+[slow_log_report.pl](https://github.com/apache/trafficserver/blob/master/tools/slow_log_report.pl)
+to summarize.
+
+```
+# grep 'Slow Request' /opy/ats/var/log/trafficserver/diags.log | perl slow_log_report.pl
+                key      total      count       mean     median       95th       99th        min        max
+           ua_begin       0.82 1571951.00       0.00       0.00       0.00       0.00       0.00       0.01
+      ua_first_read       2.02 1571951.00       0.00       0.00       0.00       0.00       0.00       0.01
+ua_read_header_done      85.10 1571951.00       0.00       0.00       0.00       0.00       0.00       5.63
+```
+
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js">
     </script>
