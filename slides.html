@@ -428,6 +428,33 @@ presentation.
 Remember to reset
 [proxy.config.diags.debug.enabled](https://docs.trafficserver.apache.org/en/latest/admin-guide/files/records.config.en.html#proxy-config-diags-debug-enabled) to 0 when you are done.
 
+---
+# http_hdrs debug tags
+
+The `http_hdrs` debug tag
+
+```
+    $ sudo traffic_ctl config set proxy.config.diags.debug.enabled 1
+    $ sudo traffic_ctl config set proxy.config.diags.debug.tags http_hdrs
+```
+
+Shows how the request and responses are modified across hooks.
+
+```
++++++++++ Incoming Request +++++++++
+...
++++++++++ Proxy's Request +++++++++
+...
++++++++++ Proxy's Request after hooks +++++++++
+...
++++++++++ Incoming O.S. Response +++++++++
+...
++++++++++ Base Header for Building Response +++++++++
+...
++++++++++ Proxy's Response 2 +++++++++
+...
+```
+
     </textarea>
     <script src="https://remarkjs.com/downloads/remark-latest.min.js">
     </script>
